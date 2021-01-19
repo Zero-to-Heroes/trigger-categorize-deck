@@ -1,0 +1,36 @@
+# https://github.com/awslabs/serverless-application-model/blob/develop/versions/2016-10-31.md
+# Indentation needs to be set with spaces, because YAML...
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Categorize deck archetype stats
+
+Resources:
+    CategorizeDeckFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+            Handler: categorize-deck.default
+            # Runtime: nodejs8.10 # Used for dev
+            Runtime: nodejs10.x
+            Timeout: 40
+            CodeUri: ./dist/categorize-deck
+            MemorySize: 256 # Increase memory to be able to handle big games like BGS
+            # https://stackoverflow.com/questions/39144688/aws-lambda-invoke-not-calling-another-lambda-function-node-js
+            # VpcConfig:
+            #     SecurityGroupIds:
+            #         - sg-0ed63616362bf1a30
+            #     SubnetIds:
+            #         - subnet-0b36da5c19637a351
+            #         - subnet-0b730ca9af74a95dd
+            Policies:
+                - AWSLambdaVPCAccessExecutionRole
+                - AmazonSESFullAccess
+                - SecretsManagerReadWrite
+                - AmazonSNSReadOnlyAccess
+                - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
+            Tags:
+                LambdaName: trigger-categorize-deck
+            Events:
+                ReviewPublishedRankedSnsTopic:
+                    Type: SNS
+                    Properties:
+                        Topic: arn:aws:sns:us-west-2:478062583808:review-published-ranked
