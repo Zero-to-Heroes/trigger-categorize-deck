@@ -8,6 +8,8 @@ npm run build && sam local invoke -t template.yaml -e event.json CategorizeDeckF
 
 ```
 npm run build && npm run package && npm run deploy
+
+rm -rf dist && tsc && rm -rf dist/node_modules && npm publish --access=public
 ```
 
 # Reference

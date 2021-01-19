@@ -11,7 +11,7 @@ allCards.initializeCardsDb();
 
 const s3 = new S3();
 
-export interface DeckIdsDataPoint {
+export interface ArchetypeConfig {
 	readonly class: string;
 	readonly archetype: string;
 	readonly cardId: string;
@@ -27,7 +27,7 @@ interface ArchetypeScore {
 export const assignArchetype = async (
 	message: ReviewMessage,
 ): Promise<{ playerArchetypeId: string; opponentArchetypeId: string }> => {
-	const data: readonly DeckIdsDataPoint[] = await getDeckIds();
+	const data: readonly ArchetypeConfig[] = await getDeckIds();
 	console.log('deckIds', data);
 
 	// player archetype
@@ -49,8 +49,8 @@ export const assignArchetype = async (
 	};
 };
 
-const assignArchetypeId = (
-	data: readonly DeckIdsDataPoint[],
+export const assignArchetypeId = (
+	data: readonly ArchetypeConfig[],
 	cards: readonly string[],
 	playerClass: string,
 	format: 'standard' | 'wild',
@@ -67,7 +67,7 @@ const assignArchetypeId = (
 };
 
 const assignScores = (
-	data: readonly DeckIdsDataPoint[],
+	data: readonly ArchetypeConfig[],
 	cards: readonly string[],
 	playerClass: string,
 	format: 'standard' | 'wild',
@@ -88,7 +88,7 @@ const assignScores = (
 	);
 };
 
-const assignPoints = (cards: readonly string[], relevantData: readonly DeckIdsDataPoint[]): number => {
+const assignPoints = (cards: readonly string[], relevantData: readonly ArchetypeConfig[]): number => {
 	return cards
 		.map(cardId => relevantData.find(data => data.cardId === cardId))
 		.filter(data => data)
@@ -96,7 +96,7 @@ const assignPoints = (cards: readonly string[], relevantData: readonly DeckIdsDa
 		.reduce((a, b) => a + b, 0);
 };
 
-const getDeckIds = async (): Promise<readonly DeckIdsDataPoint[]> => {
+const getDeckIds = async (): Promise<readonly ArchetypeConfig[]> => {
 	const cardsStr = await http(`https://static.zerotoheroes.com/api/decks-config.json`);
 	return JSON.parse(cardsStr);
 };
