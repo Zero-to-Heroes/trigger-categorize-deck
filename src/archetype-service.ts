@@ -1,5 +1,5 @@
 import { parseHsReplayString, Replay } from '@firestone-hs/hs-replay-xml-parser/dist/public-api';
-import { AllCardsService } from '@firestone-hs/reference-data';
+import { AllCardsService, formatFormat, GameFormatString } from '@firestone-hs/reference-data';
 import { decode } from 'deckstrings';
 import { S3 } from './db/s3';
 import { http } from './db/utils';
@@ -16,10 +16,10 @@ export interface ArchetypeConfig {
 	readonly archetype: string;
 	readonly cardId: string;
 	readonly points: number;
-	readonly gameFormat: 'standard' | 'wild';
+	readonly gameFormat: GameFormatString;
 }
 
-interface ArchetypeScore {
+export interface ArchetypeScore {
 	readonly archetypeId: string;
 	readonly points: number;
 }
@@ -28,13 +28,10 @@ export const assignArchetype = async (
 	message: ReviewMessage,
 ): Promise<{ playerArchetypeId: string; opponentArchetypeId: string }> => {
 	const data: readonly ArchetypeConfig[] = await getDeckIds();
-	console.log('deckIds', data);
 
 	// player archetype
 	const deckstring = message.playerDecklist;
-	console.log('getting deck ids', deckstring);
 	const { cards, playerClass, format } = explodeDeckstring(deckstring);
-	console.log('deck data', cards, playerClass, format);
 	const playerArchetypeId = assignArchetypeId(data, cards, playerClass, format);
 
 	// opponent archetype
@@ -53,24 +50,37 @@ export const assignArchetypeId = (
 	data: readonly ArchetypeConfig[],
 	cards: readonly string[],
 	playerClass: string,
-	format: 'standard' | 'wild',
+	format: GameFormatString,
 ): string => {
-	const scores: readonly ArchetypeScore[] = assignScores(data, cards, playerClass, format);
-	if (!scores.length) {
-		console.warn('Could not assign archetype', cards, playerClass, format, data);
+	const scores = computeArchetypeScores(data, cards, playerClass, format);
+	if (!scores?.length) {
+		console.warn('Could not assign archetype', cards, playerClass, format, data?.length);
 		return null;
 	}
-	console.log('scores', JSON.stringify(scores, null, 4));
-	const result = [...scores].sort((a, b) => b.points - a.points)[0];
-	console.log('found', result);
+	const result = scores[0];
 	return result.archetypeId;
+};
+
+export const computeArchetypeScores = (
+	data: readonly ArchetypeConfig[],
+	cards: readonly string[],
+	playerClass: string,
+	format: GameFormatString,
+): readonly ArchetypeScore[] => {
+	const scores: readonly ArchetypeScore[] = assignScores(data, cards, playerClass, format);
+	if (!scores?.length) {
+		// console.warn('Could not compute scores', cards, playerClass, format, data?.length);
+		return null;
+	}
+	const result = [...scores].sort((a, b) => b.points - a.points);
+	return result;
 };
 
 const assignScores = (
 	data: readonly ArchetypeConfig[],
 	cards: readonly string[],
 	playerClass: string,
-	format: 'standard' | 'wild',
+	format: GameFormatString,
 ): readonly ArchetypeScore[] => {
 	const relevantData = data
 		.filter(dataPoint => dataPoint.class === playerClass)
@@ -103,7 +113,7 @@ const getDeckIds = async (): Promise<readonly ArchetypeConfig[]> => {
 
 const explodeDeckstring = (
 	deckstring: string,
-): { cards: readonly string[]; playerClass: string; format: 'standard' | 'wild' } => {
+): { cards: readonly string[]; playerClass: string; format: GameFormatString } => {
 	const deck = decode(deckstring);
 	const deckCards: readonly string[] = deck.cards
 		.map(cards => Array(cards[1]).fill(cards[0]))
@@ -113,7 +123,7 @@ const explodeDeckstring = (
 	const playerClass = deck.heroes?.length
 		? allCards.getCardFromDbfId(deck.heroes[0])?.playerClass?.toLowerCase()
 		: null;
-	const format = deck.format === 1 ? 'wild' : 'standard';
+	const format = formatFormat(deck.format);
 	return {
 		cards: deckCards,
 		playerClass: playerClass,
