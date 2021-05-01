@@ -27,10 +27,21 @@ export interface ArchetypeScore {
 export const assignArchetype = async (
 	message: ReviewMessage,
 ): Promise<{ playerArchetypeId: string; opponentArchetypeId: string }> => {
+	await allCards.initializeCardsDb();
 	const data: readonly ArchetypeConfig[] = await getDeckIds();
 
 	// player archetype
+	// console.log('processing message', message);
 	const deckstring = message.playerDecklist;
+
+	if (!deckstring) {
+		console.warn('no deckstring, returning', message);
+		return {
+			opponentArchetypeId: null,
+			playerArchetypeId: null,
+		};
+	}
+
 	const { cards, playerClass, format } = explodeDeckstring(deckstring);
 	const playerArchetypeId = assignArchetypeId(data, cards, playerClass, format);
 
