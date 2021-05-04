@@ -68,7 +68,7 @@ const buildIdToControllerMapping = (replay: Replay): any => {
 	const idControllerMapping = {};
 	for (const entity of replay.replay.findall('.//FullEntity')) {
 		// Only consider cards that start in the deck
-		if (parseInt(entity.find(`.Tag[@tag='${GameTag.ZONE}']`).get('value')) !== Zone.DECK) {
+		if (parseInt(entity.find(`.Tag[@tag='${GameTag.ZONE}']`)?.get('value')) !== Zone.DECK) {
 			continue;
 		}
 		const controllerId = parseInt(entity.find(`.Tag[@tag='${GameTag.CONTROLLER}']`).get('value'));
