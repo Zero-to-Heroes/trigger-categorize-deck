@@ -71,7 +71,7 @@ const buildIdToControllerMapping = (replay: Replay): any => {
 		if (parseInt(entity.find(`.Tag[@tag='${GameTag.ZONE}']`)?.get('value')) !== Zone.DECK) {
 			continue;
 		}
-		const controllerId = parseInt(entity.find(`.Tag[@tag='${GameTag.CONTROLLER}']`).get('value'));
+		const controllerId = parseInt(entity.find(`.Tag[@tag='${GameTag.CONTROLLER}']`)?.get('value'));
 		if (idControllerMapping[getId(entity)]) {
 			continue;
 		}
