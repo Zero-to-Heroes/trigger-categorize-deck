@@ -4,6 +4,8 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: Categorize deck archetype stats
 
+NOT USED ANYMORE, CAN REMOVE
+
 Resources:
     CategorizeDeckQueue:
         Type: AWS::SQS::Queue
